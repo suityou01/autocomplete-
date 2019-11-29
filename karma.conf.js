@@ -16,7 +16,6 @@ module.exports = function(config) {
     // list of files / patterns to load in the browser
     files: [
       { pattern: 'tests/**/*.js', type: 'module', included: true },
-      { pattern: "tests/testutils.js", type: "module", included: false },
       { pattern: 'src/**/*.js', included: false },
     ],
 
@@ -57,7 +56,7 @@ module.exports = function(config) {
 
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-    browsers: ['Chrome', 'ChromeHeadless', 'Chrome_travis_ci'],
+    browsers: ['Chrome'],
 
     customLaunchers: {
       Chrome_travis_ci: {

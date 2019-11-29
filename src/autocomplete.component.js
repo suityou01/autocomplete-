@@ -34,27 +34,37 @@ export class AutoCompleteComponent extends HTMLElement {
 
     ac_input_text_on_keyup(e){
         var self = e.target;
-        fetch(e.target.getAttribute("url"))
-            .then(response => {
-                return response.json()
-            })
+        fetch(this.dataset.url)
+            .then(response => response.json())
             .then(data => {
                 // Work with JSON data here
-                [...document.getElementsByTagName("template")].forEach((template)=>{
-                    console.log(template.content);
-                    try{
-                        const t = document.importNode(template.content, true);
-                        
-                        [...data].forEach((dataItem)=>{
-                            self.shadowRoot.querySelector("#results").innerHTML+=(renderTemplate(t.textContent,dataItem));
-                        });
-                    }
-                    catch(e)
-                    {
-                        console.log(e);
-                    }
-                });
-                
+                console.log("data : " + data);
+                if(document.getElementsByTagName("template").length>0){
+                    [...document.getElementsByTagName("template")].forEach((template)=>{
+                        console.log(template.content);
+                        try{
+                            const t = document.importNode(template.content, true);
+                            
+                            [...data].forEach((dataItem)=>{
+                                console.log(dataItem);
+                                self.shadowRoot.querySelector("#results").innerHTML+=(renderTemplate(t.textContent,dataItem));
+                            });
+                        }
+                        catch(e)
+                        {
+                            console.log(e);
+                        }
+                    });
+                }
+                else{
+                    console.log("No templates defined!");
+                    /*No template no problem, we'll define our own!*/
+                    [...data].forEach((dataItem)=>{
+                        console.log(Reflect.get(dataItem,'id'));
+                        /*Should now be able to get a value of the id and the value fields names and reflect them from the data item*/
+                        //self.shadowRoot.querySelector("#results").innerHTML+=(renderTemplate(t.textContent,dataItem));
+                    });
+                }
             })
             .catch(err => {
                 // Do something for an error here
@@ -62,7 +72,11 @@ export class AutoCompleteComponent extends HTMLElement {
     }
 
     connectedCallback() {
-        this.shadowRoot.getElementById("ac-input-text").addEventListener("keyup", debounce(this.ac_input_text_on_keyup,500,this.getAttribute('url')));
+        this.debounce = this.getAttribute('debounce');
+        this.url = this.getAttribute('url');
+        var el = this.shadowRoot.getElementById("ac-input-text");
+        el.addEventListener("keyup", debounce(this.ac_input_text_on_keyup,500,this.getAttribute('url')));
+        el.dataset.url = this.getAttribute('url');
         const results = this.shadowRoot.getElementById("results");
     }
 
