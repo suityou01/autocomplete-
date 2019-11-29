@@ -1,0 +1,27 @@
+{
+  "name": "autocomplete-",
+  "version": "1.0.0",
+  "description": "Lightweight HTML and Javascript autocomplete web component",
+  "main": "karma.conf.js",
+  "directories": {
+    "test": "tests"
+  },
+  "dependencies": {
+    "karma-chrome-launcher": "^3.1.0",
+    "karma-jasmine": "^2.0.1",
+    "karma": "^4.4.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "karma start karma.conf.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.suityou01:suityou01/autocomplete-.git"
+  },
+  "keywords": [
+    "Autocomplete"
+  ],
+  "author": "Charlie Benger-Stevenson",
+  "license": "GPL-3.0"
+}
