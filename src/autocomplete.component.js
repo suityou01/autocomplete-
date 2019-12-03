@@ -107,7 +107,7 @@ export class AutoCompleteComponent extends HTMLElement {
 
     ac_input_text_on_keyup(e){
         e.preventDefault();
-        fetch(this.url)
+        fetch(this.url + '?' + this.keyword + '=' + e.target.value)
             .then(response => response.json())
             .then(data => {
                 // Work with JSON data here

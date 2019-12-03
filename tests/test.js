@@ -68,32 +68,38 @@ describe("Autocomplete Component", () => {
 	});
 	it("calls the REST api after the specified debounce period", async() => {
 		/*Need to inject our template into the document*/
-		var {shadowRoot} = await TestUtils.render(AutoCompleteComponent.tag, { debounce: 500, url: 'http://test.com'});
+		let {shadowRoot} = await TestUtils.render(AutoCompleteComponent.tag, { debounce: 500, url: 'http://test.com'});
 		spyOn(window, 'fetch').and.returnValue(Promise.resolve({ json: () => Promise.resolve(promisedData)}));
 		
-		var el = shadowRoot.getElementById("ac-input-text");
-		el.dispatchEvent(new KeyboardEvent('keydown',{'key':'a'}));
-		el.dispatchEvent(new KeyboardEvent('keyup',{'key':'a'}));
+		let el = shadowRoot.getElementById("ac-input-text");
+		el.value = 'a';
+		let keydown = new KeyboardEvent('keydown',{'key':'a'});
+		Object.defineProperties(keydown, { target : { writable: false, value : el}});
+		let keyup = new KeyboardEvent('keyup',{'key':'a'});
+		Object.defineProperties(keyup, { target : { writable: false, value : el}});
+		el.dispatchEvent(keydown);
+		el.dispatchEvent(keyup);
 
 		jasmine.clock().tick(501);
 		expect(window.fetch).toHaveBeenCalledTimes(1);
-		expect(window.fetch).toHaveBeenCalledWith('http://test.com');
-
 	});
 	it("calls the REST api after the specified debounce period with the query string containing the text content", async() => {
 		
 		/*Need to inject our template into the document*/
-		var {shadowRoot} = await TestUtils.render(AutoCompleteComponent.tag, { debounce: 500, url: 'http://test.com'});
+		let {shadowRoot} = await TestUtils.render(AutoCompleteComponent.tag, { debounce: 500, url: 'http://test.com'});
 		spyOn(window, 'fetch').and.returnValue(Promise.resolve({ json: () => Promise.resolve(promisedData)}));
-		
-		var el = shadowRoot.getElementById("ac-input-text");
-
-		el.dispatchEvent(new KeyboardEvent('keydown',{'key':'a'}));
-		el.dispatchEvent(new KeyboardEvent('keyup',{'key':'a'}));
+		let el = shadowRoot.getElementById("ac-input-text");
+		el.value = 'a';
+		let keydown = new KeyboardEvent('keydown',{'key':'a'});
+		Object.defineProperties(keydown, { target : { writable: false, value : el}});
+		let keyup = new KeyboardEvent('keyup',{'key':'a'});
+		Object.defineProperties(keyup, { target : { writable: false, value : el}});
+		el.dispatchEvent(keydown);
+		el.dispatchEvent(keyup);
 
 		jasmine.clock().tick(501);
 
 		expect(window.fetch).toHaveBeenCalledTimes(1);
-		expect(window.fetch).toHaveBeenCalledWith('http://test.com');
+		expect(window.fetch).toHaveBeenCalledWith('http://test.com?q=a');
 	});
 });
