@@ -1,3 +1,5 @@
+"use strict"
+
 const debounce = (fn, time) => {
     let timeout;
   
@@ -17,12 +19,83 @@ function renderTemplate(template, item) {
 }
 
 export class AutoCompleteComponent extends HTMLElement {
+    get debounce(){
+        return this.getAttribute('debounce');
+    }
+    set debounce(val) {
+        if (val) {
+            this.setAttribute('debounce', val);
+        } else {
+            this.setAttribute('debounce', '500');
+        }
+    }
+    get url(){
+        return this.getAttribute('url');
+    }
+    set url(val){
+        if (val) {
+            this.setAttribute('url', val);
+        } else {
+            this.setAttribute('url', '');
+        }
+    }
+    get keyword(){
+        return this.getAttribute('keyword');
+    }
+    set keyword(val){
+        if (val) {
+            this.setAttribute('keyword', val);
+        } else {
+            this.setAttribute('keyword', 'q');
+        }
+    }
+    get limit()
+    {
+        return this.getAttribute('limit');
+    }
+    set limit(val){
+        if (val) {
+            this.setAttribute('limit', val);
+        } else {
+            this.setAttribute('limit', '-1');
+        }
+    }
+    get limitkeyword(){
+        return this.getAttribute('limitkeyword');
+    }
+    set limitkeyword(val){
+        if (val) {
+            this.setAttribute('limitkeyword', val);
+        } else {
+            this.setAttribute('limitkeyword', 'max');
+        }
+    }
+    get offset(){
+        return this.getAttribute('offset');
+    }
+    set offset(val){
+        if (val) {
+            this.setAttribute('offset', val);
+        } else {
+            this.setAttribute('offset', '-1');
+        }
+    }
+    get offsetkeyword(){
+        return this.getAttribute('offsetkeyword');
+    }
+    set offsetkeyword(val){
+        if (val) {
+            this.setAttribute('offsetkeyword', val);
+        } else {
+            this.setAttribute('offsetkeyword', 'startfrom');
+        }
+    }
     static get tag() {
         return "ac-input";
-      }
+    }    
+    
     constructor() {
         super(); // always call super() first in the constructor.
-        const url = "";
         const shadowRoot = this.attachShadow({mode: 'open'});
         shadowRoot.innerHTML = `
         <div id='container' class='autocomplete'>
@@ -33,21 +106,18 @@ export class AutoCompleteComponent extends HTMLElement {
     }
 
     ac_input_text_on_keyup(e){
-        var self = e.target;
-        fetch(this.dataset.url)
+        e.preventDefault();
+        fetch(this.url)
             .then(response => response.json())
             .then(data => {
                 // Work with JSON data here
-                console.log("data : " + data);
                 if(document.getElementsByTagName("template").length>0){
                     [...document.getElementsByTagName("template")].forEach((template)=>{
-                        console.log(template.content);
                         try{
                             const t = document.importNode(template.content, true);
                             
                             [...data].forEach((dataItem)=>{
-                                console.log(dataItem);
-                                self.shadowRoot.querySelector("#results").innerHTML+=(renderTemplate(t.textContent,dataItem));
+                                this.shadowRoot.querySelector("#results").innerHTML+=(renderTemplate(t.textContent,dataItem));
                             });
                         }
                         catch(e)
@@ -57,10 +127,14 @@ export class AutoCompleteComponent extends HTMLElement {
                     });
                 }
                 else{
-                    console.log("No templates defined!");
+                    var res = this.getElementById('results');
                     /*No template no problem, we'll define our own!*/
                     [...data].forEach((dataItem)=>{
-                        console.log(Reflect.get(dataItem,'id'));
+                        var n = document.createElement("div");
+                        n.className="resultItem";
+                        n.id = Reflect.get(dataItem,'id');
+                        n.appendChild(document.createTextNode(Reflect.get(dataItem,'name')));
+                        res.appendChild(n);
                         /*Should now be able to get a value of the id and the value fields names and reflect them from the data item*/
                         //self.shadowRoot.querySelector("#results").innerHTML+=(renderTemplate(t.textContent,dataItem));
                     });
@@ -72,12 +146,22 @@ export class AutoCompleteComponent extends HTMLElement {
     }
 
     connectedCallback() {
-        this.debounce = this.getAttribute('debounce');
-        this.url = this.getAttribute('url');
-        var el = this.shadowRoot.getElementById("ac-input-text");
-        el.addEventListener("keyup", debounce(this.ac_input_text_on_keyup,500,this.getAttribute('url')));
-        el.dataset.url = this.getAttribute('url');
-        const results = this.shadowRoot.getElementById("results");
+        if (!this.hasAttribute('debounce'))
+            this.setAttribute('debounce', '500');
+        if (!this.hasAttribute('url'))
+            this.setAttribute('url', '');
+        if (!this.hasAttribute('keyword'))
+            this.setAttribute('keyword', 'q');
+        if (!this.hasAttribute('limit'))
+            this.setAttribute('limit', '-1');
+        if (!this.hasAttribute('limitkeyword'))
+            this.setAttribute('limitkeyword', 'limit');
+        if (!this.hasAttribute('offset'))
+            this.setAttribute('offset', '-1');
+        if (!this.hasAttribute('offsetkeyword'))
+            this.setAttribute('offsetkeyword', 'offset');
+        let el = this.shadowRoot.getElementById("ac-input-text");
+        el.addEventListener("keyup", debounce(this.ac_input_text_on_keyup.bind(this),500));
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
