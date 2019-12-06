@@ -1,5 +1,19 @@
 "use strict"
 
+const regex = /\${[^{]+}/g;
+
+function interpolate(template, variables, fallback) {
+    return template.replace(regex, (match) => {
+        const path = match.slice(2, -1).trim();
+        return getObjPath(path, variables, fallback);
+    });
+}
+
+//get the specified property or nested property of an object
+function getObjPath(path, obj, fallback = '') {
+    return path.split('.').reduce((res, key) => res[key] || fallback, obj);
+}
+
 const debounce = (fn, time) => {
     let timeout;
   
@@ -12,10 +26,7 @@ const debounce = (fn, time) => {
 }
 
 function renderTemplate(template, item) {
-    console.log(item.name);
-    //const pattern = /{\s*(\w+?)\s*}/g; // {property}
-    //return template.replace(pattern, (_, token) => data[token] || '');
-    return eval(template);
+    return interpolate(template,item,"??");
 }
 
 export class AutoCompleteComponent extends HTMLElement {
@@ -90,6 +101,41 @@ export class AutoCompleteComponent extends HTMLElement {
             this.setAttribute('offsetkeyword', 'startfrom');
         }
     }
+    get nokeyword(){
+        return this.getAttribute('nokeyword') || false;
+    }
+    set nokeyword(val){
+        if(val) {
+            this.setAttribute('nokeyword', val);
+        } else
+        {
+            this.setAttribute('nokeyword', false);
+        }
+    }
+    get onlistdisplayed()
+    {
+        return this._onlistdisplayed;
+    }
+    set onlistdisplayed(val)
+    {
+        if(val && typeof val=="function"){
+            this._onlistdisplayed= val;
+        }
+    }
+    get onitemselected()
+    {
+        return this._onitemselected;
+    }
+    set onitemselected(val)
+    {
+        if(val && typeof val=="function"){
+            this._onitemselected= val;
+        }
+    }
+    get itemtemplate()
+    {
+        return this.getAttribute('itemtemplate') || null;
+    }
     static get tag() {
         return "ac-input";
     }    
@@ -105,43 +151,67 @@ export class AutoCompleteComponent extends HTMLElement {
       `;
     }
 
+    ac_list_item_selected(e){
+        this.shadowRoot.getElementById('ac-input-text').value = e.target.innerText;
+        if (typeof (this.onitemselected) == "function"){
+                    
+            this.onitemselected(e.target);
+        }
+    }
+
     ac_input_text_on_keyup(e){
-        e.preventDefault();
-        fetch(this.url + '?' + this.keyword + '=' + e.target.value)
+        //e.preventDefault();
+        let url = ''
+        let res = this.shadowRoot.getElementById('results');
+        if (!this.nokeyword){
+            url = this.url + '?' + this.keyword + '=' + e.target.value;
+            if (this.limit!=-1){
+                url = url += '&' + this.limitkeyword + '=' + this.limit;
+            }
+            if (this.offset!=-1){
+                url = url += '&' + this.offsetkeyword + '=' + this.offset;
+            }
+        }
+        else
+        {
+            url = this.url;
+        }
+        fetch(url)
             .then(response => response.json())
             .then(data => {
                 // Work with JSON data here
-                if(document.getElementsByTagName("template").length>0){
-                    [...document.getElementsByTagName("template")].forEach((template)=>{
-                        try{
-                            const t = document.importNode(template.content, true);
-                            
-                            [...data].forEach((dataItem)=>{
-                                this.shadowRoot.querySelector("#results").innerHTML+=(renderTemplate(t.textContent,dataItem));
-                            });
-                        }
-                        catch(e)
-                        {
-                            console.log(e);
-                        }
+                if(this.itemtemplate){
+                    [...data].forEach((dataItem)=>{
+                        res.innerHTML+=(renderTemplate(this.itemtemplate,dataItem));
+                        res.lastChild.addEventListener('click', this.ac_list_item_selected);
                     });
                 }
                 else{
-                    var res = this.getElementById('results');
-                    /*No template no problem, we'll define our own!*/
-                    [...data].forEach((dataItem)=>{
-                        var n = document.createElement("div");
-                        n.className="resultItem";
-                        n.id = Reflect.get(dataItem,'id');
-                        n.appendChild(document.createTextNode(Reflect.get(dataItem,'name')));
-                        res.appendChild(n);
-                        /*Should now be able to get a value of the id and the value fields names and reflect them from the data item*/
-                        //self.shadowRoot.querySelector("#results").innerHTML+=(renderTemplate(t.textContent,dataItem));
-                    });
+                    try{
+                        /*No template no problem, we'll define our own!*/
+                        [...data].forEach((dataItem)=>{
+                            var n = document.createElement("div");
+                            n.addEventListener('click', this.ac_list_item_selected.bind(this));
+                            n.className="resultItem";
+                            n.id = Reflect.get(dataItem,'id');
+                            n.appendChild(document.createTextNode(Reflect.get(dataItem,'name')));
+                            res.appendChild(n);
+                        });
+                    }
+                    catch(e)
+                    {
+                        console.log(e);
+                    }
+                }
+              
+                if (typeof (this.onlistdisplayed) == "function"){
+                    
+                    this.onlistdisplayed(this, data);
                 }
             })
             .catch(err => {
                 // Do something for an error here
+                console.log(err);
             });
     }
 
@@ -153,15 +223,19 @@ export class AutoCompleteComponent extends HTMLElement {
         if (!this.hasAttribute('keyword'))
             this.setAttribute('keyword', 'q');
         if (!this.hasAttribute('limit'))
-            this.setAttribute('limit', '-1');
+            this.setAttribute('limit', -1);
         if (!this.hasAttribute('limitkeyword'))
             this.setAttribute('limitkeyword', 'limit');
         if (!this.hasAttribute('offset'))
-            this.setAttribute('offset', '-1');
+            this.setAttribute('offset', -1);
         if (!this.hasAttribute('offsetkeyword'))
             this.setAttribute('offsetkeyword', 'offset');
+        
         let el = this.shadowRoot.getElementById("ac-input-text");
         el.addEventListener("keyup", debounce(this.ac_input_text_on_keyup.bind(this),500));
+
+        let r = this.shadowRoot.getElementById("results");
+        r.addEventListener("click", this.ac_list_item_selected.bind(this));
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
