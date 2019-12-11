@@ -43,11 +43,11 @@ describe("Autocomplete Component", () => {
 	})
 	it("renders default html in the shadow root", async () => {
 		const {shadowRoot} = await TestUtils.render(AutoCompleteComponent.tag);
-		expect(shadowRoot.innerHTML.replace(/(\r\n|\n|\r)/gm,"").replace(/\s/g, "")).toEqual('<divid="container"class="autocomplete"><inputtype="text"id="ac-input-text"><divid="results"></div></div>');	
+		expect(shadowRoot.getElementById('container').innerHTML.replace(/(\r\n|\n|\r)/gm,"").replace(/\s/g, "")).toEqual('<ulid="ac-input-list"class="flexlist"><li><divid="ac-input-text"class="editor"contenteditable=""></div><buttonid="cancel-button"class="cancelsearch"style="display:none;">x</button></li></ul><divid="results"style="display:none;"></div>');	
+		expect(shadowRoot.styleSheets[0].cssRules[2].selectorText).toEqual('.flexlist');
 	});
 	it("sets its default state correctly", async () => {
 		const {shadowRoot} = await TestUtils.render(AutoCompleteComponent.tag);
-		
 		expect(shadowRoot.host.debounce).toEqual('500');
 		expect(shadowRoot.host.url).toEqual("");
         expect(shadowRoot.host.keyword).toEqual("q");
@@ -57,7 +57,7 @@ describe("Autocomplete Component", () => {
 		expect(shadowRoot.host.offsetkeyword).toEqual('offset');
 	});
 	it("sets its configured state correctly", async () => {
-		var {shadowRoot} = await TestUtils.render(AutoCompleteComponent.tag, { debounce: 1000, url: 'http://test.com', keyword:"name", limit: 10, limitkeyword: 'max', offset: 100, offsetkeyword: 'startfrom'});
+		var {shadowRoot} = await TestUtils.render(AutoCompleteComponent.tag, { debounce: 1000, url: 'http://test.com', keyword:"name", limit: 10, limitkeyword: 'max', offset: 100, offsetkeyword: 'startfrom', width: '500px'});
 		expect(shadowRoot.host.debounce).toEqual('1000');
 		expect(shadowRoot.host.url).toEqual("http://test.com");
         expect(shadowRoot.host.keyword).toEqual("name");
@@ -65,14 +65,15 @@ describe("Autocomplete Component", () => {
         expect(shadowRoot.host.limitkeyword).toEqual('max');
         expect(shadowRoot.host.offset).toEqual('100');
 		expect(shadowRoot.host.offsetkeyword).toEqual('startfrom');
+		expect(shadowRoot.getElementById('ac-input-text').style.width).toEqual('500px');
 	});
 	it("calls the REST api after the specified debounce period", async() => {
 		/*Need to inject our template into the document*/
 		let {shadowRoot} = await TestUtils.render(AutoCompleteComponent.tag, { debounce: 500, url: 'http://test.com'});
-		spyOn(window, 'fetch').and.returnValue(Promise.resolve({ json: () => Promise.resolve(promisedData)}));
+		spyOn(window, 'fetch').and.returnValue(Promise.resolve({ json: () => Promise.resolve(promisedData), ok: true}));
 		
 		let el = shadowRoot.getElementById("ac-input-text");
-		el.value = 'a';
+		el.textContent = 'a';
 		let keydown = new KeyboardEvent('keydown',{'key':'a'});
 		Object.defineProperties(keydown, { target : { writable: false, value : el}});
 		let keyup = new KeyboardEvent('keyup',{'key':'a'});
@@ -86,10 +87,10 @@ describe("Autocomplete Component", () => {
 	it("calls the REST api after the specified debounce period with the query string containing the text content", async() => {
 		
 		/*Need to inject our template into the document*/
-		let {shadowRoot} = await TestUtils.render(AutoCompleteComponent.tag, { debounce: 500, url: 'http://test.com'});
+		let {shadowRoot} = await TestUtils.render(AutoCompleteComponent.tag, { debounce: 500, url: 'http://test.com', ok: true});
 		spyOn(window, 'fetch').and.returnValue(Promise.resolve({ json: () => Promise.resolve(promisedData)}));
 		let el = shadowRoot.getElementById("ac-input-text");
-		el.value = 'a';
+		el.textContent = 'a';
 		let keydown = new KeyboardEvent('keydown',{'key':'a'});
 		Object.defineProperties(keydown, { target : { writable: false, value : el}});
 		let keyup = new KeyboardEvent('keyup',{'key':'a'});
@@ -103,10 +104,10 @@ describe("Autocomplete Component", () => {
 		expect(window.fetch).toHaveBeenCalledWith('http://test.com?q=a');
 	});
 	it("calls the REST api with the url only if nokeyword is set to true", async() => {
-		let {shadowRoot} = await TestUtils.render(AutoCompleteComponent.tag, { debounce: 500, url: 'http://test.com', nokeyword: true});
-		spyOn(window, 'fetch').and.returnValue(Promise.resolve({ json: () => Promise.resolve(promisedData)}));
+		let {shadowRoot} = await TestUtils.render(AutoCompleteComponent.tag, { debounce: 500, url: 'http://test.com/', nokeyword: true});
+		spyOn(window, 'fetch').and.returnValue(Promise.resolve({ json: () => Promise.resolve(promisedData), ok: true}));
 		let el = shadowRoot.getElementById("ac-input-text");
-		el.value = 'a';
+		el.textContent = 'a';
 		let keydown = new KeyboardEvent('keydown',{'key':'a'});
 		Object.defineProperties(keydown, { target : { writable: false, value : el}});
 		let keyup = new KeyboardEvent('keyup',{'key':'a'});
@@ -117,13 +118,13 @@ describe("Autocomplete Component", () => {
 		jasmine.clock().tick(501);
 
 		expect(window.fetch).toHaveBeenCalledTimes(1);
-		expect(window.fetch).toHaveBeenCalledWith('http://test.com');
+		expect(window.fetch).toHaveBeenCalledWith('http://test.com/a');
 	});
 	it("calls the REST api with a limit and default limit keyword if the limit value is set", async() => {
 		let {shadowRoot} = await TestUtils.render(AutoCompleteComponent.tag, { debounce: 500, url: 'http://test.com', limit: 10});
-		spyOn(window, 'fetch').and.returnValue(Promise.resolve({ json: () => Promise.resolve(promisedData)}));
+		spyOn(window, 'fetch').and.returnValue(Promise.resolve({ json: () => Promise.resolve(promisedData), ok: true}));
 		let el = shadowRoot.getElementById("ac-input-text");
-		el.value = 'a';
+		el.textContent = 'a';
 		let keydown = new KeyboardEvent('keydown',{'key':'a'});
 		Object.defineProperties(keydown, { target : { writable: false, value : el}});
 		let keyup = new KeyboardEvent('keyup',{'key':'a'});
@@ -138,9 +139,9 @@ describe("Autocomplete Component", () => {
 	});
 	it("calls the REST api with a limit and the limit keyword specified if both are set", async() => {
 		let {shadowRoot} = await TestUtils.render(AutoCompleteComponent.tag, { debounce: 500, url: 'http://test.com', limit: 10, limitkeyword: 'max' });
-		spyOn(window, 'fetch').and.returnValue(Promise.resolve({ json: () => Promise.resolve(promisedData)}));
+		spyOn(window, 'fetch').and.returnValue(Promise.resolve({ json: () => Promise.resolve(promisedData), ok: true}));
 		let el = shadowRoot.getElementById("ac-input-text");
-		el.value = 'a';
+		el.textContent = 'a';
 		let keydown = new KeyboardEvent('keydown',{'key':'a'});
 		Object.defineProperties(keydown, { target : { writable: false, value : el}});
 		let keyup = new KeyboardEvent('keyup',{'key':'a'});
@@ -155,9 +156,9 @@ describe("Autocomplete Component", () => {
 	});
 	it("calls the REST api with an offset using the default offset keyword if set", async() => {
 		let {shadowRoot} = await TestUtils.render(AutoCompleteComponent.tag, { debounce: 500, url: 'http://test.com', offset: 100 });
-		spyOn(window, 'fetch').and.returnValue(Promise.resolve({ json: () => Promise.resolve(promisedData)}));
+		spyOn(window, 'fetch').and.returnValue(Promise.resolve({ json: () => Promise.resolve(promisedData), ok: true}));
 		let el = shadowRoot.getElementById("ac-input-text");
-		el.value = 'a';
+		el.textContent = 'a';
 		let keydown = new KeyboardEvent('keydown',{'key':'a'});
 		Object.defineProperties(keydown, { target : { writable: false, value : el}});
 		let keyup = new KeyboardEvent('keyup',{'key':'a'});
@@ -172,9 +173,9 @@ describe("Autocomplete Component", () => {
 	});
 	it("calls the REST api with an offset and default offset keyword if both values are set", async() => {
 		let {shadowRoot} = await TestUtils.render(AutoCompleteComponent.tag, { debounce: 500, url: 'http://test.com', offset: 100, offsetkeyword: 'startfrom' });
-		spyOn(window, 'fetch').and.returnValue(Promise.resolve({ json: () => Promise.resolve(promisedData)}));
+		spyOn(window, 'fetch').and.returnValue(Promise.resolve({ json: () => Promise.resolve(promisedData), ok: true}));
 		let el = shadowRoot.getElementById("ac-input-text");
-		el.value = 'a';
+		el.textContent = 'a';
 		let keydown = new KeyboardEvent('keydown',{'key':'a'});
 		Object.defineProperties(keydown, { target : { writable: false, value : el}});
 		let keyup = new KeyboardEvent('keyup',{'key':'a'});
@@ -202,13 +203,13 @@ describe("Autocomplete Component", () => {
 				i++;
 			});
 		};
-		spyOn(window, 'fetch').and.returnValue(Promise.resolve({ json: () => Promise.resolve(promisedData)}));
+		spyOn(window, 'fetch').and.returnValue(Promise.resolve({ json: () => Promise.resolve(promisedData), ok: true}));
 		spyOn(component, 'ac_input_text_on_keyup');
 		
 		let el = component.shadowRoot.getElementById("ac-input-text");
 		let r = component.shadowRoot.getElementById("results");
 		el.addEventListener('keyup', component.ac_input_text_on_keyup);
-		el.value = 'a';
+		el.textContent = 'a';
 
 		let keydown = new KeyboardEvent('keydown',{'key':'a'});
 		Object.defineProperties(keydown, { target : { writable: false, value : el}});
@@ -220,6 +221,15 @@ describe("Autocomplete Component", () => {
 		expect(window.fetch).toHaveBeenCalledTimes(1);
 		expect(component.ac_input_text_on_keyup).toHaveBeenCalledTimes(1);
 	})
+	it("calls the onblur event and the results are empty", async()=>{
+		let component = await TestUtils.render(AutoCompleteComponent.tag, { debounce: 500, url: 'http://test.com' });
+		let el = component.shadowRoot.getElementById('ac-input-text');
+		spyOn(component, 'ac_input_text_on_blur');
+		component.onblur = (component,e)=>{
+			expect(component.shadowRoot.getElementById('results').innerHTML).toEqual("");
+		}
+		el.blur();
+	});
 	it("calls the REST api and builds the result set in the display section using the supplied template", async()=>{
 		let component = await TestUtils.render(AutoCompleteComponent.tag, { debounce: 500, url: 'http://test.com', itemtemplate: "<div class='testresultitem' id='${id}'>${name}</div>" });
 		component.onlistdisplayed = function(component, data){ 
@@ -235,13 +245,13 @@ describe("Autocomplete Component", () => {
 				i++;
 			});
 		};
-		spyOn(window, 'fetch').and.returnValue(Promise.resolve({ json: () => Promise.resolve(promisedData)}));
+		spyOn(window, 'fetch').and.returnValue(Promise.resolve({ json: () => Promise.resolve(promisedData), ok: true}));
 		spyOn(component, 'ac_input_text_on_keyup');
 		
 		let el = component.shadowRoot.getElementById("ac-input-text");
 		let r = component.shadowRoot.getElementById("results");
 		el.addEventListener('keyup', component.ac_input_text_on_keyup);
-		el.value = 'a';
+		el.textContent = 'a';
 
 		let keydown = new KeyboardEvent('keydown',{'key':'a'});
 		Object.defineProperties(keydown, { target : { writable: false, value : el}});
@@ -252,6 +262,28 @@ describe("Autocomplete Component", () => {
 		jasmine.clock().tick(501);
 		expect(window.fetch).toHaveBeenCalledTimes(1);
 		expect(component.ac_input_text_on_keyup).toHaveBeenCalledTimes(1);
+	});
+	it("displays an error in the results section if the REST endpoint is not available", async()=>{
+		let {shadowRoot} = await TestUtils.render(AutoCompleteComponent.tag, { debounce: 500, url: 'http://test.com'});
+		spyOn(window, 'fetch').and.returnValue(Promise.resolve({ json: () => Promise.resolve(promisedData), ok: false}));
+
+		shadowRoot.host.onlistdisplayed = function(component, data){ 
+			let r = component.shadowRoot.getElementById('results');
+			expect(r.innerHTML).toEqual('<b style="color:#FF0000">Endpoint not available</b>');
+		};
+		
+		let el = shadowRoot.getElementById("ac-input-text");
+		el.textContent = 'a';
+		let keydown = new KeyboardEvent('keydown',{'key':'a'});
+		Object.defineProperties(keydown, { target : { writable: false, value : el}});
+		let keyup = new KeyboardEvent('keyup',{'key':'a'});
+		Object.defineProperties(keyup, { target : { writable: false, value : el}});
+		el.dispatchEvent(keydown);
+		el.dispatchEvent(keyup);
+
+		jasmine.clock().tick(501);
+		expect(window.fetch).toHaveBeenCalledTimes(1);
+		
 	});
 	it("adds the selected autocomplete item to the text box when the user clicks on in", async()=>{
 		let component = await TestUtils.render(AutoCompleteComponent.tag, { debounce: 500, url: 'http://test.com' });
@@ -277,7 +309,45 @@ describe("Autocomplete Component", () => {
 		let el = component.shadowRoot.getElementById("ac-input-text");
 		let r = component.shadowRoot.getElementById("results");
 		el.addEventListener('keyup', component.ac_input_text_on_keyup);
-		el.value = 'a';
+		el.textContent = 'a';
+
+		let keydown = new KeyboardEvent('keydown',{'key':'a'});
+		Object.defineProperties(keydown, { target : { writable: false, value : el}});
+		let keyup = new KeyboardEvent('keyup',{'key':'a'});
+		Object.defineProperties(keyup, { target : { writable: false, value : el}});
+		el.dispatchEvent(keydown);
+		el.dispatchEvent(keyup);
+		jasmine.clock().tick(501);
+		expect(window.fetch).toHaveBeenCalledTimes(1);
+		expect(component.ac_input_text_on_keyup).toHaveBeenCalledTimes(1);
+	});
+	it("adds multiple selected autocomplete items to the ul when the user clicks on in", async()=>{
+		let component = await TestUtils.render(AutoCompleteComponent.tag, { debounce: 500, url: 'http://test.com', multiselect: true });
+		component.onlistdisplayed = function(component, data){ 
+			r = component.shadowRoot.getElementById('results');
+			let c = new MouseEvent('click', {'button': 0});
+			
+			/*Choose element at random*/
+			var item = r.childNodes[Math.floor(Math.random()*r.childNodes.length)];
+			Object.defineProperties(c, { target : { writable: false, value : item}});
+			
+			item.dispatchEvent(c);
+			
+		};
+		
+		component.onitemselected = function(e){
+			//expect(this.shadowRoot.getElementById('ac-input-text').value).toEqual(e.innerText);
+			console.log(e);
+			console.log(this.shadowRoot.getElementById('ac-input-list'));
+		};
+
+		spyOn(window, 'fetch').and.returnValue(Promise.resolve({ json: () => Promise.resolve(promisedData), ok: true}));
+		spyOn(component, 'ac_input_text_on_keyup');
+		
+		let el = component.shadowRoot.getElementById("ac-input-text");
+		let r = component.shadowRoot.getElementById("results");
+		el.addEventListener('keyup', component.ac_input_text_on_keyup);
+		el.textContent = 'a';
 
 		let keydown = new KeyboardEvent('keydown',{'key':'a'});
 		Object.defineProperties(keydown, { target : { writable: false, value : el}});
