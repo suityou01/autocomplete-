@@ -211,6 +211,7 @@ export class AutoCompleteComponent extends HTMLElement {
             border-radius: 3px;
             color: #777;
             line-height: 20px;
+            position: absolute;
           }
           
           .flexlist li {
@@ -227,10 +228,17 @@ export class AutoCompleteComponent extends HTMLElement {
             line-height: 25px;
             /*overflow-x: scroll;*/
             white-space: nowrap;
+            padding-left: 3px;
           }
 
           #editor:focus{
             outline:none;
+          }
+
+          .editor:empty:not(:focus):before{
+            content:attr(data-text);
+            color: lightgray;
+            margin-left: 3px;
           }
 
           span.removeitem {
@@ -290,14 +298,17 @@ export class AutoCompleteComponent extends HTMLElement {
     }
 
     ac_add_list_item(e){
+        e.preventDefault();
+        console.log('ac_add_list_item' + e.target);
         let el = this.shadowRoot.getElementById('ac-input-list');
         let li = document.createElement('li');
         let s = document.createElement('span');
-        s.className = 'value';
+        li.className = 'value';
         s.innerText = e.target.innerText;
         let sc = document.createElement('span');
         sc.className='removeitem';
         sc.innerText = 'x';
+        sc.addEventListener('click',this.ac_remove_list_item.bind(this));
         li.id= e.target.id;
         li.appendChild(s);
         li.appendChild(sc);
@@ -306,12 +317,21 @@ export class AutoCompleteComponent extends HTMLElement {
 
     ac_remove_list_item(e)
     {
+        e.preventDefault();
+        console.log(e.target.parentNode.id);
+        let id = e.target.parentNode.id;
         let el = this.shadowRoot.getElementById('ac-input-list');
-        let li = el.getElementById(e.target.id);
+        let li = HTMLElement;
+        [...el.childNodes].forEach((item)=>{
+            if (item.id = id){
+                li = item;
+            }
+        });
         el.removeChild(li);
     }
 
     ac_list_item_selected(e){
+        e.preventDefault();
         if(this.multiselect){
             this.ac_add_list_item(e);
         }
@@ -339,6 +359,12 @@ export class AutoCompleteComponent extends HTMLElement {
         if(typeof(visibility)=="boolean"){
             (visibility)?(this._cancelbutton.style.display = 'block'):(this._cancelbutton.style.display = 'none');
         }
+    }
+    cancel_button_click(e){
+        this._results.innerHTML = "";
+        this.ac_results_visible(false);
+        this._editor.textContent = "";
+        this.cancel_button_visible(false);
     }
     ac_input_text_on_keyup(e){
         let url = '';
@@ -385,7 +411,9 @@ export class AutoCompleteComponent extends HTMLElement {
                 if(this.itemtemplate){
                     [...data].forEach((dataItem)=>{
                         this._results.innerHTML+=(renderTemplate(this.itemtemplate,dataItem));
-                        this._results.lastChild.addEventListener('click', this.ac_list_item_selected);
+                        let last = this._results.lastChild;
+                        last.addEventListener('click', this.ac_list_item_selected);
+                        last.id = last.id || this._results.childNodes.length;
                     });
                 }
                 else{
@@ -395,7 +423,7 @@ export class AutoCompleteComponent extends HTMLElement {
                             var n = document.createElement("div");
                             n.addEventListener('click', this.ac_list_item_selected.bind(this));
                             n.className="resultItem";
-                            n.id = Reflect.get(dataItem,'id');
+                            n.id = Reflect.get(dataItem,'id') || this._results.childNodes.length;
                             n.appendChild(document.createTextNode(Reflect.get(dataItem,'name')));
                             this._results.appendChild(n);
                         });
@@ -440,20 +468,20 @@ export class AutoCompleteComponent extends HTMLElement {
             this.setAttribute('offset', -1);
         if (!this.hasAttribute('offsetkeyword'))
             this.setAttribute('offsetkeyword', 'offset');
+        if (this.hasAttribute('placeholder'))
+            this._editor.setAttribute('data-text', this.getAttribute('placeholder'));
         
-        let el = this.shadowRoot.getElementById("ac-input-text");
-        let res = this.shadowRoot.getElementById("results");
-        el.addEventListener("keyup", debounce(this.ac_input_text_on_keyup.bind(this),500));
-        el.blur = this.ac_input_text_on_blur.bind(this);
+        this._editor.addEventListener("keyup", debounce(this.ac_input_text_on_keyup.bind(this),500));
+        this._editor.blur = this.ac_input_text_on_blur.bind(this);
 
         if (this.hasAttribute('width'))
         {
-            el.style.width = this.getAttribute('width');
-            res.style.width = this.getAttribute('width');
+            this._editor.style.width = this.getAttribute('width');
+            this._results.style.width = this.getAttribute('width');
         }
 
-        let r = this.shadowRoot.getElementById("results");
-        r.addEventListener("click", this.ac_list_item_selected.bind(this));
+        //this._results.addEventListener("click", this.ac_list_item_selected.bind(this));
+        this._cancelbutton.addEventListener("click", this.cancel_button_click.bind(this));
         
     }
 

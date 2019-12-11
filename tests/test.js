@@ -57,7 +57,7 @@ describe("Autocomplete Component", () => {
 		expect(shadowRoot.host.offsetkeyword).toEqual('offset');
 	});
 	it("sets its configured state correctly", async () => {
-		var {shadowRoot} = await TestUtils.render(AutoCompleteComponent.tag, { debounce: 1000, url: 'http://test.com', keyword:"name", limit: 10, limitkeyword: 'max', offset: 100, offsetkeyword: 'startfrom', width: '500px'});
+		let {shadowRoot} = await TestUtils.render(AutoCompleteComponent.tag, { debounce: 1000, url: 'http://test.com', keyword:"name", limit: 10, limitkeyword: 'max', offset: 100, offsetkeyword: 'startfrom', width: '500px', placeholder: 'someplaceholdertext'});
 		expect(shadowRoot.host.debounce).toEqual('1000');
 		expect(shadowRoot.host.url).toEqual("http://test.com");
         expect(shadowRoot.host.keyword).toEqual("name");
@@ -66,6 +66,7 @@ describe("Autocomplete Component", () => {
         expect(shadowRoot.host.offset).toEqual('100');
 		expect(shadowRoot.host.offsetkeyword).toEqual('startfrom');
 		expect(shadowRoot.getElementById('ac-input-text').style.width).toEqual('500px');
+		expect(shadowRoot.getElementById('ac-input-text').getAttribute('data-text')).toEqual("someplaceholdertext");
 	});
 	it("calls the REST api after the specified debounce period", async() => {
 		/*Need to inject our template into the document*/
