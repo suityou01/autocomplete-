@@ -153,6 +153,13 @@ export class AutoCompleteComponent extends HTMLElement {
         return "ac-input";
     }    
     
+    selectedItems(){
+        items=[];
+        [...this._listitems].forEach((item)=>{
+            items.push({id: item.id, value: item.getElementsByClassName("itemvalue")[0]});
+        });
+    }
+
     constructor() {
         super(); // always call super() first in the constructor.
         const shadowRoot = this.attachShadow({mode: 'open'});
@@ -177,6 +184,7 @@ export class AutoCompleteComponent extends HTMLElement {
         this._results = shadowRoot.getElementById('results'); 
         this._editor = shadowRoot.getElementById('ac-input-text');
         this._cancelbutton = shadowRoot.getElementById('cancel-button');
+        this._listitems = shadowRoot.getElementById("ac-input-list");
         let style = document.createElement('style');
         style.textContent = `
         ul {
@@ -209,6 +217,7 @@ export class AutoCompleteComponent extends HTMLElement {
             list-style: none;
             text-align: left;
             cursor: text;
+            background-color: #ffffff;
           }
           
           .flexdatalist:before {
@@ -278,7 +287,7 @@ export class AutoCompleteComponent extends HTMLElement {
               display: flex !important;
               flex-direction: column;
               position: absolute;
-              /*margin-top: 35px;*/
+              background-color: #ffffff;
           }
 
          .cancelsearch {
@@ -319,6 +328,7 @@ export class AutoCompleteComponent extends HTMLElement {
         let el = this.shadowRoot.getElementById('ac-input-list');
         let li = document.createElement('li');
         let s = document.createElement('span');
+        s.className="itemvalue";
         li.className = 'value';
         s.innerText = e.target.innerText;
         let sc = document.createElement('span');
@@ -430,18 +440,27 @@ export class AutoCompleteComponent extends HTMLElement {
             })
             .then(data => {
                 // Work with JSON data here
+                let dataItems = null;
+                if(this.hasAttribute('subitem')){
+                    dataItems = Reflect.get(data,this.getAttribute('subitem'));
+                }
+                else
+                {
+                    dataItems = data;
+                }
                 if(this.itemtemplate){
-                    [...data].forEach((dataItem)=>{
-                        this._results.innerHTML+=(renderTemplate(this.itemtemplate,dataItem));
-                        let last = this._results.lastChild;
-                        last.addEventListener('click', this.ac_list_item_selected);
-                        last.id = last.id || this._results.childNodes.length;
+                    [...dataItems].forEach((dataItem)=>{
+                        let e = document.createElement("template");
+                        e.innerHTML = renderTemplate(this.itemtemplate,dataItem);
+                        e.content.firstChild.addEventListener('click', this.ac_list_item_selected.bind(this));
+                        e.id = e.id || this._results.childNodes.length;
+                        this._results.appendChild(e.content.firstChild);
                     });
                 }
                 else{
                     try{
                         /*No template no problem, we'll define our own!*/
-                        [...data].forEach((dataItem)=>{
+                        [...dataItems].forEach((dataItem)=>{
                             var n = document.createElement("div");
                             n.addEventListener('click', this.ac_list_item_selected.bind(this));
                             n.className="resultItem";

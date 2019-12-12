@@ -4,9 +4,39 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Autocomplete Demo</title>
         <script type="module" src="src/autocomplete.component.js"></script>
+        <style>
+            .section{
+                padding:25px;
+                background-color: lightgrey;
+                border: 2px dashed black;
+                margin-top: 5px;
+            }
+            label{
+                position: fixed;
+                right: 15px;
+                margin-top: 5px;
+            }
+        </style>
     </head>
     <body>
         <h1>Autocomplete Simple Demo</h1>
-        <ac-input url='https://restcountries.eu/rest/v2/name/' width='250px' nokeyword=true placeholder='Select country' multiselect=true></ac-input>
+        <div id='content'>
+            <div id='simple' class="section">
+                <ac-input url='https://restcountries.eu/rest/v2/name/' width='250px' nokeyword=true placeholder='Select country' ></ac-input>        
+                <label>Simple Autocomplete</label>
+            </div>
+            <div id='multi' class="section">
+                <ac-input url='https://restcountries.eu/rest/v2/name/' width='250px' nokeyword=true placeholder='Select country' multiselect=true></ac-input>
+                <label>Multiselect Autocomplete</label>
+            </div>
+            <div id='simpletemplate' class="section">
+                <ac-input url='https://restcountries.eu/rest/v2/name/' width='250px' nokeyword=true placeholder='Select country' itemtemplate="<div class='resultItem' id='${id}'><i>${name}</i></div>"></ac-input>
+                <label>Templated Singlemode Autocomplete</label>
+            </div>
+            <div id='multipletemplate' class="section">
+                <ac-input url='https://reqres.in/api/users?page=2' width='250px' nokeyword=true subitem=data placeholder='Select user' multiselect itemtemplate="<div class='resultItem' id='${id}'><img src='${avatar}' style='border-radius:50%; width:50px; height:50px;'/>${email}</div>"></ac-input>
+                <label>Templated Multiselect Autocomplete</label>
+            </div>
+        </div>
     </body>
 </html>
