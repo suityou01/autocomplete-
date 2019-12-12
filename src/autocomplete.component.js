@@ -157,16 +157,23 @@ export class AutoCompleteComponent extends HTMLElement {
         super(); // always call super() first in the constructor.
         const shadowRoot = this.attachShadow({mode: 'open'});
         shadowRoot.innerHTML = `
-        <div id='container' class='autocomplete'>
-            <ul id='ac-input-list' class='flexlist'>
-                <li>
-                    <div id='ac-input-text' class='editor' contenteditable></div>
-                    <button id='cancel-button' class='cancelsearch'>x</button>
-                </li>
-            </ul>
-            <div id='results'></div>
+        <div id='container'>
+            <div class='selection-section'>
+                <ul id='ac-input-list' class='flexlist'>
+                    <li>
+                        <div id='ac-input-text' class='editor' contenteditable></div>
+                    </li>
+                    <li>
+                        <button id='cancel-button' class='cancelsearch'>x</button>
+                    </li>
+                </ul>
+            </div>
+            <div class='results-section'>
+                <div id='results'></div>
+            </div>
         </div>
         `;
+        this._container = shadowRoot.getElementById('container');
         this._results = shadowRoot.getElementById('results'); 
         this._editor = shadowRoot.getElementById('ac-input-text');
         this._cancelbutton = shadowRoot.getElementById('cancel-button');
@@ -182,11 +189,17 @@ export class AutoCompleteComponent extends HTMLElement {
             padding-inline-start: 40px;
           }
           
-          #container{
-            /*border: 1px solid #eee;*/
+          .selection-section{
+            border: 1px solid #eee;
+            display: flex;
+            flex-direction: row;
+            /*display: inline;*/
+            /*width: 250px;*/
+          }
+
+          .results-section{
             display: flex;
             flex-direction: column;
-            width: 250px;
           }
           
           .flexlist{
@@ -211,7 +224,7 @@ export class AutoCompleteComponent extends HTMLElement {
             border-radius: 3px;
             color: #777;
             line-height: 20px;
-            position: absolute;
+            /*position: absolute;*/
           }
           
           .flexlist li {
@@ -222,16 +235,16 @@ export class AutoCompleteComponent extends HTMLElement {
           }
           
           .editor{
-            border: .1px solid #eee;
-            width: 50px;
+            /*border: .1px solid #eee;*/
+            width: 100%;
             float: left;
             line-height: 25px;
-            /*overflow-x: scroll;*/
+            overflow-x: hidden;
             white-space: nowrap;
-            padding-left: 3px;
+            padding: 3px;
           }
 
-          #editor:focus{
+          .editor:focus{
             outline:none;
           }
 
@@ -262,6 +275,10 @@ export class AutoCompleteComponent extends HTMLElement {
           #results{
               border: 0.5px dashed lightgray;
               white-space: nowrap;
+              display: flex !important;
+              flex-direction: column;
+              position: absolute;
+              /*margin-top: 35px;*/
           }
 
          .cancelsearch {
@@ -273,7 +290,7 @@ export class AutoCompleteComponent extends HTMLElement {
             vertical-align: middle;
             position:absolute;
             top: 2px;
-            right: 3px;
+            /*right: 3px;*/
             color: #666;
             font-size: small;
         }
@@ -299,7 +316,6 @@ export class AutoCompleteComponent extends HTMLElement {
 
     ac_add_list_item(e){
         e.preventDefault();
-        console.log('ac_add_list_item' + e.target);
         let el = this.shadowRoot.getElementById('ac-input-list');
         let li = document.createElement('li');
         let s = document.createElement('span');
@@ -312,7 +328,8 @@ export class AutoCompleteComponent extends HTMLElement {
         li.id= e.target.id;
         li.appendChild(s);
         li.appendChild(sc);
-        el.appendChild(li);
+        el.insertBefore(li,this._editor.parentNode);
+        this.ac_reset_editor();
     }
 
     ac_remove_list_item(e)
@@ -321,13 +338,17 @@ export class AutoCompleteComponent extends HTMLElement {
         console.log(e.target.parentNode.id);
         let id = e.target.parentNode.id;
         let el = this.shadowRoot.getElementById('ac-input-list');
-        let li = HTMLElement;
-        [...el.childNodes].forEach((item)=>{
+        let li = Node;
+        [...el.getElementsByClassName("value")].forEach((item)=>{
             if (item.id = id){
                 li = item;
             }
         });
         el.removeChild(li);
+    }
+
+    ac_reset_editor(){
+        this._editor.innerText='';
     }
 
     ac_list_item_selected(e){
@@ -338,10 +359,11 @@ export class AutoCompleteComponent extends HTMLElement {
         else
         {
             this.shadowRoot.getElementById('ac-input-text').textContent = e.target.innerText;
+            this.cancel_button_visible(true);
         }
         this._results.innerHTML = '';
         this.ac_results_visible(false);
-        this.cancel_button_visible(true);
+        
         if (typeof (this.onitemselected) == "function"){
                         
             this.onitemselected(e.target);
@@ -370,7 +392,7 @@ export class AutoCompleteComponent extends HTMLElement {
         let url = '';
         this._results.innerHTML= '';
 
-        if(this.shadowRoot.getElementById('ac-input-text').textContent=='')
+        if(this._editor.textContent=='')
         {
             return;
         }
@@ -380,7 +402,7 @@ export class AutoCompleteComponent extends HTMLElement {
         }
         
         if (!this.nokeyword){
-            url = this.url + '?' + this.keyword + '=' + this.shadowRoot.getElementById('ac-input-text').textContent;
+            url = this.url + '?' + this.keyword + '=' + this._editor.textContent;
             if (this.limit!=-1){
                 url = url += '&' + this.limitkeyword + '=' + this.limit;
             }
@@ -390,7 +412,7 @@ export class AutoCompleteComponent extends HTMLElement {
         }
         else
         {
-            url = this.url + this.shadowRoot.getElementById('ac-input-text').textContent;
+            url = this.url + this._editor.textContent;
         }
         try
         {
@@ -423,7 +445,7 @@ export class AutoCompleteComponent extends HTMLElement {
                             var n = document.createElement("div");
                             n.addEventListener('click', this.ac_list_item_selected.bind(this));
                             n.className="resultItem";
-                            n.id = Reflect.get(dataItem,'id') || this._results.childNodes.length;
+                            n.id = Reflect.get(dataItem,'id') || this._results.childNodes.length + 1;
                             n.appendChild(document.createTextNode(Reflect.get(dataItem,'name')));
                             this._results.appendChild(n);
                         });
@@ -476,8 +498,9 @@ export class AutoCompleteComponent extends HTMLElement {
 
         if (this.hasAttribute('width'))
         {
-            this._editor.style.width = this.getAttribute('width');
+            //this._editor.style.width = this.getAttribute('width');
             this._results.style.width = this.getAttribute('width');
+            this._container.style.width = this.getAttribute('width');
         }
 
         //this._results.addEventListener("click", this.ac_list_item_selected.bind(this));
