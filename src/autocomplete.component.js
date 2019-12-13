@@ -153,11 +153,13 @@ export class AutoCompleteComponent extends HTMLElement {
         return "ac-input";
     }    
     
-    selectedItems(){
+    get selectedItems()
+    {
         items=[];
         [...this._listitems].forEach((item)=>{
             items.push({id: item.id, value: item.getElementsByClassName("itemvalue")[0]});
         });
+        return items;
     }
 
     constructor() {
@@ -201,8 +203,6 @@ export class AutoCompleteComponent extends HTMLElement {
             border: 1px solid #eee;
             display: flex;
             flex-direction: row;
-            /*display: inline;*/
-            /*width: 250px;*/
           }
 
           .results-section{
@@ -345,7 +345,6 @@ export class AutoCompleteComponent extends HTMLElement {
     ac_remove_list_item(e)
     {
         e.preventDefault();
-        console.log(e.target.parentNode.id);
         let id = e.target.parentNode.id;
         let el = this.shadowRoot.getElementById('ac-input-list');
         let li = Node;
