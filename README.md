@@ -12,7 +12,7 @@ A lightweight vanilla javascript web component for single and multi select auto 
 Contents |
 ---------|
 [Attributes](#attributes)|
-[Methods](#methods)|
+[Properties](#properties)|
 [Events](#events)|
 [Styles](#styles)|
 [Installation](#installation)|
@@ -36,7 +36,11 @@ width|The width of the component's container||`<ac-input url='https://restcountr
 subitem|Used to destructure the array returned from the REST api||`<ac-input url='https://restcountries.eu/rest/v2/name/' subitem='data.subitem.subsubitem'></ac-input>` will return the array of items 3 levels deep **e.g. payload.data.subitem.subsubitem.items**
 url|The url of the REST api that will supply the autocomplete data|| `<ac-input url='https://restcountries.eu/rest/v2/name/'></ac-input>`
 
-## Methods
+## Properties
+Property|Meaning|Example
+--------|-------|-------
+tag|The tag name|Returns "ac-input"
+selectedItems|The selected items|Returns an array of key value pairs for the selected item(s)
 
 ## Events
 Event | Meaning | Example
