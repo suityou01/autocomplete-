@@ -205,6 +205,11 @@ Add as a javascript module to your web page
 Or import from CDN
 `<script type="module" src="http://charliebenger.com/src/webcomponents/autocomplete/1.0.0/autocomplete.component.js"></script>`
 
+or
+`<script type="module" src="https://raw.githubusercontent.com/suityou01/autocomplete-/master/src/autocomplete.component.js"></script>`
+
+
+
 ## Usage
 ### Simple mode with no querystring
 `<ac-input url='https://restcountries.eu/rest/v2/name/' width='250px' nokeyword=true placeholder='Select country' ></ac-input>`
