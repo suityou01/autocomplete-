@@ -202,6 +202,9 @@ span.removeitem {
 Add as a javascript module to your web page
 `<script type="module" src="src/autocomplete.component.js"></script>`
 
+Or import from CDN
+`<script type="module" src="http://charliebenger.com/src/webcomponents/autocomplete/1.0.0/autocomplete.component.js"></script>`
+
 ## Usage
 ### Simple mode with no querystring
 `<ac-input url='https://restcountries.eu/rest/v2/name/' width='250px' nokeyword=true placeholder='Select country' ></ac-input>`
