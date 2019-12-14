@@ -203,6 +203,7 @@ Add as a javascript module to your web page
 `<script type="module" src="src/autocomplete.component.js"></script>`
 
 Or import from CDN
+
 `<script type="module" src="http://charliebenger.com/src/webcomponents/autocomplete/1.0.0/autocomplete.component.js"></script>`
 
 Or
